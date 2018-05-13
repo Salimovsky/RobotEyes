@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+
+    <color name="activity_color_picker_pointer_ring">#FFFFFFFF</color>
+
+    <color name="pointer_color">#80FFFFFF</color>
+
+    <color name="black_shadow">#33000000</color>
+
+    <color name="activity_main_background_color">#EEEEEE</color>
+
+    <color name="activity_color_picker_bottom_bar_background">#ffffff</color>
+
+    <color name="humanBlue">#0046BE</color>
+    <color name="blue2727">#4976E6</color>
+    <color name="blue2747">#001E73</color>
+    <color name="blue50">#F1F8FF</color>
+    <color name="techYellow">#FFF200</color>
+    <color name="yellow116">#FFCE00</color>
+    <color name="buttonYellow">#FFE000</color>
+    <color name="techBlack">#1D252C</color>
+    <color name="black425">#55555a</color>
+    <color name="techGray">#959AA2</color>
+    <color name="techWhite">#E0E6EF</color>
+    <color name="white650">#C5CBD5</color>
+    <color name="bgWhite">#F0F2F4</color>
+    <color name="white">#FFFFFF</color>
+    <color name="successGreen">#308800</color>
+    <color name="geekSquadOrange">#E37222</color>
+    <color name="valueRed">#BB0628</color>
+
+</resources>

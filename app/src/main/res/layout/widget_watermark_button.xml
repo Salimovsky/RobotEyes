@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/watermark_button_height"
+    tools:background="@drawable/background_watermark_button"
+    tools:ignore="ContentDescription">
+
+    <!-- Use an empty view to constrain an image such that it is pushed out of the layout bounds. -->
+    <Space
+        android:id="@+id/widget_watermark_constraint"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="@dimen/watermark_button_watermark_inset_bottom"
+        android:layout_marginEnd="@dimen/watermark_button_watermark_inset_end"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <ImageView
+        android:id="@+id/widget_watermark"
+        android:layout_width="@dimen/watermark_button_watermark_size"
+        android:layout_height="@dimen/watermark_button_watermark_size"
+        android:alpha="@fraction/alpha_watermark"
+        android:tint="@color/techBlack"
+        app:layout_constraintStart_toEndOf="@id/widget_watermark_constraint"
+        app:layout_constraintTop_toBottomOf="@id/widget_watermark_constraint"
+        tools:src="@color/techBlack" />
+
+    <TextView
+        android:id="@+id/widget_text"
+        style="@style/BodyCTAWhite"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/paddingXLarge"
+        android:layout_marginStart="@dimen/paddingXLarge"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Placeholder Text" />
+
+    <TextView
+        android:id="@+id/widget_secondary_text"
+        style="@style/SmallCTAWhite"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="@id/widget_text"
+        app:layout_constraintTop_toBottomOf="@id/widget_text" />
+
+</android.support.constraint.ConstraintLayout>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Margins & Padding -->
+    <dimen name="paddingHuge">64dp</dimen>
+    <dimen name="paddingXXXXLarge">48dp</dimen>
+    <dimen name="paddingXXXLargePlus">36dp</dimen>
+    <dimen name="paddingXXXLarge">32dp</dimen>
+    <dimen name="paddingXXLarge">24dp</dimen>
+    <dimen name="paddingXLargePlus">20dp</dimen>
+    <dimen name="paddingXLarge">16dp</dimen>
+    <dimen name="paddingLarge">12dp</dimen>
+    <dimen name="paddingMedium">8dp</dimen>
+    <dimen name="paddingXMedium">6dp</dimen>
+    <dimen name="paddingSmall">4dp</dimen>
+    <dimen name="paddingXSmall">2dp</dimen>
+    <dimen name="paddingXXSmall">1dp</dimen>
+
+    <dimen name="fontHeadline">36sp</dimen>
+    <dimen name="fontPageTitle">24sp</dimen>
+    <dimen name="fontHeroTitle">20sp</dimen>
+    <dimen name="fontSectionTitle">16sp</dimen>
+    <dimen name="fontBody">14sp</dimen>
+    <dimen name="fontSmallBody">12sp</dimen>
+    <dimen name="fontDisclaimer">11sp</dimen>
+
+    <!-- Common radii -->
+    <dimen name="radius_tiny">2dp</dimen>
+    <dimen name="radius_small">4dp</dimen>
+    <dimen name="radius_compact">6dp</dimen>
+
+    <dimen name="activity_color_picker_bottom_bar_height">72dp</dimen>
+    <dimen name="activity_color_picker_bottom_bar_height_half">36dp</dimen>
+
+    <dimen name="activity_color_picker_pointer_size">8dp</dimen>
+    <dimen name="activity_color_picker_pointer_ring_size">48dp</dimen>
+    <dimen name="activity_color_picker_pointer_ring_thickness">8dp</dimen>
+
+    <!-- Watermark Widget -->
+    <dimen name="watermark_button_height">72dp</dimen>
+    <dimen name="watermark_button_watermark_size">88dp</dimen>
+    <dimen name="watermark_button_watermark_inset_bottom">68dp</dimen>
+    <dimen name="watermark_button_watermark_inset_end">80dp</dimen>
+
+</resources>

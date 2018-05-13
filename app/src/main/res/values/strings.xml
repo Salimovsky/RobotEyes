@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">night-light</string>
+    <string name="menu_color_picker_action_flash">Flash</string>
+
+</resources>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+
+    <LinearLayout
+        android:id="@+id/palette_color_picker"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <com.flask.colorpicker.ColorPickerView
+            android:id="@+id/color_picker_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            app:density="12"
+            app:lightnessSlider="true"
+            app:lightnessSliderView="@id/lightness_slider"
+            app:wheelType="FLOWER" />
+
+        <com.flask.colorpicker.slider.LightnessSlider
+            android:id="@+id/lightness_slider"
+            android:layout_width="match_parent"
+            android:layout_height="48dp" />
+    </LinearLayout>
+
+    <android.support.constraint.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="@dimen/paddingXLarge"
+        android:layout_marginTop="@dimen/paddingXLargePlus"
+        android:paddingEnd="@dimen/paddingXLarge"
+        android:paddingStart="@dimen/paddingXLarge">
+
+        <com.addi.salim.night_light.WatermarkButtonWidget
+            android:id="@+id/palette_color_picker_tile"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/paddingSmall"
+            app:layout_constraintEnd_toStartOf="@+id/camera_color_picker_tile"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:text="Palette Color" />
+
+        <com.addi.salim.night_light.WatermarkButtonWidget
+            android:id="@+id/camera_color_picker_tile"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/paddingSmall"
+            app:layout_constraintBaseline_toBaselineOf="@id/palette_color_picker_tile"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/palette_color_picker_tile"
+            app:text="Live Camera" />
+
+        <com.addi.salim.night_light.WatermarkButtonWidget
+            android:id="@+id/live_sound_sensor_tile"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/paddingSmall"
+            android:layout_marginTop="@dimen/paddingMedium"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/accel_sensor_tile"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/palette_color_picker_tile"
+            app:text="Live Sound" />
+
+        <com.addi.salim.night_light.WatermarkButtonWidget
+            android:id="@+id/accel_sensor_tile"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/paddingSmall"
+            app:layout_constraintBottom_toBottomOf="@id/live_sound_sensor_tile"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/live_sound_sensor_tile"
+            app:layout_constraintTop_toTopOf="@id/live_sound_sensor_tile"
+            app:text="Acceleration Sensor" />
+    </android.support.constraint.ConstraintLayout>
+
+    <Button
+        android:id="@+id/connectBtn"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp"
+        android:width="100dp"
+        android:background="#6c9de6"
+        android:text="CONNECT"
+        android:textColor="#fff" />
+
+</LinearLayout>

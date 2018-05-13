@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="WatermarkButtonWidget">
+        <attr name="text" />
+        <attr name="enabled" format="boolean" />
+        <attr name="secondaryText" format="string" />
+        <attr name="watermark" format="reference" />
+    </declare-styleable>
+</resources>

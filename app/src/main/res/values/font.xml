@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Font Types -->
+    <style name="RegularFontStyle">
+        <item name="android:fontFamily">sans-serif-light</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="MediumFontStyle">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="BoldFontStyle">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Headlines -->
+
+    <style name="Headline" parent="BoldFontStyle">
+        <item name="android:textColor">@color/techBlack</item>
+        <item name="android:textSize">@dimen/fontHeadline</item>
+    </style>
+
+    <style name="PageTitle" parent="BoldFontStyle">
+        <item name="android:textColor">@color/techBlack</item>
+        <item name="android:textSize">@dimen/fontPageTitle</item>
+    </style>
+
+    <style name="PageTitleSetup" parent="BoldFontStyle">
+        <item name="android:textColor">@color/humanBlue</item>
+        <item name="android:textSize">@dimen/fontPageTitle</item>
+    </style>
+
+    <style name="PageTitleWhite" parent="BoldFontStyle">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">@dimen/fontPageTitle</item>
+    </style>
+
+    <style name="HeroTitle" parent="RegularFontStyle">
+        <item name="android:textColor">@color/techBlack</item>
+        <item name="android:textSize">@dimen/fontHeroTitle</item>
+    </style>
+
+    <style name="SectionTitle" parent="BoldFontStyle">
+        <item name="android:textColor">@color/techBlack</item>
+        <item name="android:textSize">@dimen/fontSectionTitle</item>
+    </style>
+
+    <style name="ModalTitle" parent="RegularFontStyle">
+        <item name="android:textColor">@color/techBlack</item>
+        <item name="android:textSize">@dimen/fontSectionTitle</item>
+    </style>
+
+    <!-- Body -->
+
+    <style name="Body" parent="RegularFontStyle">
+        <item name="android:textColor">@color/techBlack</item>
+        <item name="android:textSize">@dimen/fontBody</item>
+    </style>
+
+    <style name="BodyTitle" parent="MediumFontStyle">
+        <item name="android:textColor">@color/techBlack</item>
+        <item name="android:textSize">@dimen/fontBody</item>
+    </style>
+
+    <style name="BodySecondary" parent="RegularFontStyle">
+        <item name="android:textColor">@color/black425</item>
+        <item name="android:textSize">@dimen/fontBody</item>
+    </style>
+
+    <style name="BodyWhite" parent="RegularFontStyle">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">@dimen/fontBody</item>
+    </style>
+
+    <style name="BodyCTA" parent="MediumFontStyle">
+        <item name="android:textColor">@color/humanBlue</item>
+        <item name="android:textSize">@dimen/fontBody</item>
+    </style>
+
+    <style name="BodyCTAWhite" parent="MediumFontStyle">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">@dimen/fontBody</item>
+    </style>
+
+    <style name="BodyValue" parent="MediumFontStyle">
+        <item name="android:textColor">@color/valueRed</item>
+        <item name="android:textSize">@dimen/fontBody</item>
+    </style>
+
+    <style name="BodySuccess" parent="MediumFontStyle">
+        <item name="android:textColor">@color/successGreen</item>
+        <item name="android:textSize">@dimen/fontBody</item>
+    </style>
+
+    <!-- Small -->
+
+    <style name="SmallBody" parent="RegularFontStyle">
+        <item name="android:textColor">@color/techBlack</item>
+        <item name="android:textSize">@dimen/fontSmallBody</item>
+    </style>
+
+    <style name="SmallTitle" parent="MediumFontStyle">
+        <item name="android:textColor">@color/techBlack</item>
+        <item name="android:textSize">@dimen/fontSmallBody</item>
+    </style>
+
+    <style name="SmallSecondary" parent="RegularFontStyle">
+        <item name="android:textColor">@color/black425</item>
+        <item name="android:textSize">@dimen/fontSmallBody</item>
+    </style>
+
+    <style name="SmallWhite" parent="RegularFontStyle">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">@dimen/fontSmallBody</item>
+    </style>
+
+    <style name="SmallCTA" parent="MediumFontStyle">
+        <item name="android:textColor">@color/humanBlue</item>
+        <item name="android:textSize">@dimen/fontSmallBody</item>
+    </style>
+
+    <style name="SmallCTAWhite" parent="MediumFontStyle">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">@dimen/fontSmallBody</item>
+    </style>
+
+    <style name="SmallValue" parent="MediumFontStyle">
+        <item name="android:textColor">@color/valueRed</item>
+        <item name="android:textSize">@dimen/fontSmallBody</item>
+    </style>
+
+    <style name="SmallSuccess" parent="MediumFontStyle">
+        <item name="android:textColor">@color/successGreen</item>
+        <item name="android:textSize">@dimen/fontSmallBody</item>
+    </style>
+
+    <!-- Disclaimer -->
+
+    <style name="Disclaimer" parent="RegularFontStyle">
+        <item name="android:textColor">@color/black425</item>
+        <item name="android:textSize">@dimen/fontDisclaimer</item>
+    </style>
+
+    <!-- ================================================== -->
+    <!-- DO NOT ADD NEW FONTS WITHOUT UX APPROVAL           -->
+    <!-- ================================================== -->
+
+
+</resources>
