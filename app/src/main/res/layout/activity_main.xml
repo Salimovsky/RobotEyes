@@ -34,7 +34,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginBottom="@dimen/paddingXLarge"
-        android:layout_marginTop="@dimen/paddingXLargePlus"
+        android:layout_marginTop="@dimen/paddingXLarge"
         android:paddingEnd="@dimen/paddingXLarge"
         android:paddingStart="@dimen/paddingXLarge">
 
@@ -85,10 +85,11 @@
     <Button
         android:id="@+id/connectBtn"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_marginLeft="24dp"
-        android:layout_marginRight="24dp"
+        android:layout_marginBottom="@dimen/paddingLarge"
+        android:layout_marginLeft="@dimen/paddingXLargePlus"
+        android:layout_marginRight="@dimen/paddingXLargePlus"
         android:width="100dp"
         android:background="#6c9de6"
         android:text="CONNECT"
