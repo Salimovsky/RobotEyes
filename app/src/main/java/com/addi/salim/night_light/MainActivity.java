@@ -235,7 +235,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onColorChanged(int selectedColor) {
                 // Handle on color change
-                Log.d("ColorPicker", "onColorChanged: 0x" + Integer.toHexString(selectedColor));
+                final String colorHex = Integer.toHexString(selectedColor);
+                Log.d("ColorPicker", "onColorChanged: 0x" + colorHex);
+                final byte red = (byte) ((0xFF0000 & selectedColor) >> 16);
+                final byte green = (byte) ((0x00FF00 & selectedColor) >> 8);
+                final byte blue = (byte) (0x0000FF & selectedColor);
+                sendColor(red, green, blue);
             }
         });
         colorPickerView.addOnColorSelectedListener(new OnColorSelectedListener() {
