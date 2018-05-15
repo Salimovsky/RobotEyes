@@ -40,6 +40,8 @@ public class ColorPickerBaseActivity extends AppCompatActivity
      */
     protected static final String TAG = ColorPickerBaseActivity.class.getSimpleName();
 
+    private ArduinoManager arduinoManager;
+
     /**
      * A safe way to get an instance of the back {@link Camera}.
      */
@@ -135,6 +137,7 @@ public class ColorPickerBaseActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_color_picker);
+        arduinoManager = ArduinoManager.getInstance(getApplicationContext());
 
         initViews();
         initTranslationDeltas();
@@ -147,6 +150,10 @@ public class ColorPickerBaseActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
+        // Check if BLE is enabled on the device.
+        if (!arduinoManager.isBluetoothEnabled()) {
+            finish();
+        }
 
         // Setup the camera asynchronously.
         mCameraAsyncTask = new CameraAsyncTask();
@@ -172,6 +179,11 @@ public class ColorPickerBaseActivity extends AppCompatActivity
         if (mCameraPreview != null) {
             mPreviewContainer.removeView(mCameraPreview);
         }
+    }
+
+    private void sendColor(byte red, byte green, byte blue) {
+        final byte data[] = new byte[]{red, green, blue};
+        arduinoManager.sendData(data);
     }
 
     @Override
@@ -227,6 +239,10 @@ public class ColorPickerBaseActivity extends AppCompatActivity
      */
     protected void applyPreviewColor(int previewColor) {
         mPickedColorPreview.getBackground().setColorFilter(previewColor, PorterDuff.Mode.SRC_ATOP);
+        final byte red = (byte) ((0xFF0000 & previewColor) >> 16);
+        final byte green = (byte) ((0x00FF00 & previewColor) >> 8);
+        final byte blue = (byte) (0x0000FF & previewColor);
+        sendColor(red, green, blue);
     }
 
     @Override
