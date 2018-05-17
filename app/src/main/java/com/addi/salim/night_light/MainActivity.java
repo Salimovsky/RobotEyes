@@ -22,7 +22,6 @@ import android.widget.Toast;
 
 import com.flask.colorpicker.ColorPickerView;
 import com.flask.colorpicker.OnColorChangedListener;
-import com.flask.colorpicker.OnColorSelectedListener;
 
 import static com.addi.salim.night_light.PermissionUtil.BLUETOOTH_SETTING_REQUEST_CODE;
 import static com.addi.salim.night_light.PermissionUtil.CAMERA_PERMISSION_REQUEST_CODE;
@@ -37,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private View liveCameraTile;
     private View liveSoundTile;
     private View accelerationSensorTile;
+    private TileMode currentTileMode;
 
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
@@ -45,9 +45,17 @@ public class MainActivity extends AppCompatActivity {
     private long timestampNanoSecondsZero;
 
     private ArduinoManager arduinoManager;
+    private int lastReceivedColor = -1;
 
     // Declare all variables associated with the UI components
     private Button connectToBluetoothButton;
+
+    private enum TileMode {
+        PALETTE_COLOR,
+        LIVE_CAMERA,
+        ACCELERATION_SENSOR,
+        LIVE_SOUND
+    }
 
     private final ConnectionListener connectionListener = new ConnectionListener() {
 
@@ -95,24 +103,42 @@ public class MainActivity extends AppCompatActivity {
             updateUI(v);
             switch (v.getId()) {
                 case R.id.palette_color_picker_tile:
+                    currentTileMode = TileMode.PALETTE_COLOR;
                     break;
                 case R.id.camera_color_picker_tile:
+                    currentTileMode = TileMode.LIVE_CAMERA;
                     openCameraColorPicker();
                     break;
                 case R.id.live_sound_sensor_tile:
+                    currentTileMode = TileMode.LIVE_SOUND;
                     break;
                 case R.id.accel_sensor_tile:
+                    currentTileMode = TileMode.ACCELERATION_SENSOR;
+                    startAccelerationSensing();
                     break;
             }
         }
     };
+
+    private void startAccelerationSensing() {
+        final double rc = 1d / 3d; // 3 Hz
+        if (lowPassFilter == null || shakeSignalPeekDetector == null) {
+            lowPassFilter = new LowPassFilter(rc);
+            shakeSignalPeekDetector = new ShakeSignalPeekDetector();
+        } else {
+            lowPassFilter.reset();
+            shakeSignalPeekDetector.reset();
+        }
+    }
 
     private final SensorEventListener accelerometerSensorEventListener = new SensorEventListener() {
 
         @Override
         public void onSensorChanged(SensorEvent event) {
             if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-                //processNewEvent(event.timestamp, event.values[0], event.values[1], event.values[2]);
+                if (currentTileMode == TileMode.ACCELERATION_SENSOR) {
+                    processNewEvent(event.timestamp, event.values[0], event.values[1], event.values[2]);
+                }
             }
         }
 
@@ -120,7 +146,6 @@ public class MainActivity extends AppCompatActivity {
         public void onAccuracyChanged(Sensor sensor, int accuracy) {
         }
     };
-    private int selectedColor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -141,24 +166,13 @@ public class MainActivity extends AppCompatActivity {
         colorPickerView.addOnColorChangedListener(new OnColorChangedListener() {
             @Override
             public void onColorChanged(int selectedColor) {
-                MainActivity.this.selectedColor = selectedColor;
                 // Handle on color change
-                final byte red = (byte) Color.red(selectedColor); //byte) ((0xFF0000 & selectedColor) >> 16);
-                final byte green = (byte) Color.green(selectedColor); //((0x00FF00 & selectedColor) >> 8);
-                final byte blue = (byte) Color.blue(selectedColor); //(0x0000FF & selectedColor);
+                final byte red = (byte) Color.red(selectedColor);
+                final byte green = (byte) Color.green(selectedColor);
+                final byte blue = (byte) Color.blue(selectedColor);
                 sendColor(red, green, blue);
             }
         });
-        colorPickerView.addOnColorSelectedListener(new OnColorSelectedListener() {
-            @Override
-            public void onColorSelected(int selectedColor) {
-               /* Toast.makeText(
-                        MainActivity.this,
-                        "selectedColor: " + Integer.toHexString(selectedColor).toUpperCase(),
-                        Toast.LENGTH_SHORT).show();*/
-            }
-        });
-
 
         // Bluetooth setup. Created by the RedBear team.
         if (!getPackageManager().hasSystemFeature(
@@ -233,10 +247,10 @@ public class MainActivity extends AppCompatActivity {
                 paletteColorPickerView.setVisibility(View.VISIBLE);
                 break;
             case R.id.camera_color_picker_tile:
-                //liveCameraTile.setSelected(true);
                 break;
             case R.id.live_sound_sensor_tile:
-                liveSoundTile.setSelected(true);
+                //liveSoundTile.setSelected(true);
+                Toast.makeText(this, "This mode is not supported yet!", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.accel_sensor_tile:
                 accelerationSensorTile.setSelected(true);
@@ -280,26 +294,29 @@ public class MainActivity extends AppCompatActivity {
 
     private void sendColor(byte red, byte green, byte blue) {
         final byte data[] = new byte[]{red, green, blue};
-        arduinoManager.sendData(data);
+        arduinoManager.sendColor(data);
     }
 
     private void processData(byte[] data) {
         int color = ((0xFF & data[0]) << 16);
         color = color + ((0xFF & data[1]) << 8);
         color = color + (0xFF & data[2]);
-        rootView.getBackground().setColorFilter(0xFF000000 | (0xFFFFFF & color), PorterDuff.Mode.SRC_ATOP);
+
+        if (lastReceivedColor != color) {
+            rootView.getBackground().setColorFilter(0xFF000000 | (0xFFFFFF & color), PorterDuff.Mode.SRC_ATOP);
+            lastReceivedColor = color;
+        }
     }
 
     private void processNewEvent(long timestamp, double... signal) {
         final double x = signal[0] + signal[1] + signal[2];
-        final double y = signal[1];
-        final double z = signal[2];
 
         if (lowPassFilter.isInitialized()) {
-            final double[] filteredSignal = lowPassFilter.applyLowPassFilter(timestamp, x, y, z);
+            final double[] filteredSignal = lowPassFilter.applyLowPassFilter(timestamp, x, 0, 0);
 
             if (shakeSignalPeekDetector.addAndDetectPeak(timestamp, filteredSignal[0])) {
-                //TODO: change led color
+                arduinoManager.switchColor();
+                Toast.makeText(this, "shake detected!", Toast.LENGTH_SHORT).show();
             }
 
         } else {
@@ -307,7 +324,7 @@ public class MainActivity extends AppCompatActivity {
             shakeSignalPeekDetector.initialize(timestampNanoSecondsZero);
             shakeSignalPeekDetector.addAndDetectPeak(timestamp, x);
             lowPassFilter.initialize(timestampNanoSecondsZero);
-            lowPassFilter.applyLowPassFilter(timestamp, x, y, z);
+            lowPassFilter.applyLowPassFilter(timestamp, x, 0, 0);
         }
     }
 

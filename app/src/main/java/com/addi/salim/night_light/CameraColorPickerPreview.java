@@ -12,6 +12,7 @@ import android.view.TextureView;
  * Credit to Credits go to Thomas Barthélémy https://github.com/tbarthel-fr
  * and Vincent Barthélémy https://github.com/vbarthel-fr
  * https://github.com/tvbarthel
+ * https://github.com/tvbarthel/CameraColorPicker
  */
 public class CameraColorPickerPreview extends TextureView implements TextureView.SurfaceTextureListener, Camera.PreviewCallback {
 

@@ -114,10 +114,9 @@ public class ArduinoManager {
 
                 getGattService(mBluetoothLeService.getSupportedGattService());
             } else if (RBLService.ACTION_DATA_AVAILABLE.equals(action)) {
-                final byte[] data = intent.getByteArrayExtra(RBLService.EXTRA_DATA);
-                notifyOnDataReceived(data);
+                final byte[] receivedData = intent.getByteArrayExtra(RBLService.EXTRA_DATA);
+                notifyOnDataReceived(receivedData);
             } else if (RBLService.ACTION_GATT_RSSI.equals(action)) {
-                //displayData(intent.getStringExtra(RBLService.EXTRA_DATA));
             }
         }
     };
@@ -148,9 +147,32 @@ public class ArduinoManager {
         context.registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
     }
 
-    public void sendData(byte[] data) {
-        mCharacteristicTx.setValue(data);
+    private void sendData(byte[] commandAndData) {
+        mCharacteristicTx.setValue(commandAndData);
         mBluetoothLeService.writeCharacteristic(mCharacteristicTx);
+    }
+
+    public void sendColor(byte[] data) {
+        final byte[] command = {0x01};
+        final byte[] commandAndData = new byte[command.length + data.length];
+
+        // concatenate command and data arrays into a single commandAndData array:
+        System.arraycopy(command, 0, commandAndData, 0, command.length);
+        System.arraycopy(data, 0, commandAndData, command.length, data.length);
+
+        sendData(commandAndData);
+    }
+
+    public void switchColor() {
+        final byte[] data = new byte[3]; // dummy data to fill the required length for sent data
+        final byte[] command = {0x02};
+        final byte[] commandAndData = new byte[command.length + data.length];
+
+        // concatenate command and data arrays into a single commandAndData array:
+        System.arraycopy(command, 0, commandAndData, 0, command.length);
+        System.arraycopy(data, 0, commandAndData, command.length, data.length);
+
+        sendData(commandAndData);
     }
 
     public boolean isBluetoothEnabled() {

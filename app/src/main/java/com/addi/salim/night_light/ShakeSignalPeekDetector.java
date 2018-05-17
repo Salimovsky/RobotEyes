@@ -3,16 +3,14 @@ package com.addi.salim.night_light;
 import java.util.concurrent.TimeUnit;
 
 public class ShakeSignalPeekDetector {
-    public final static double RC = 1d / 3d; // constant time in seconds equivalent to 3Hz.
     private boolean isInitialized;
-    // Assuming that the fastest a user can walk is f = 1/RC = 3 steps per seconds!
-    private final static int MIN_PERIOD_TIME = (int) (RC * TimeUnit.SECONDS.toMillis(1));
+    private final static int MIN_PERIOD_TIME = (int) TimeUnit.SECONDS.toMillis(1);
     private final long samplingMinPeriod = TimeUnit.MILLISECONDS.toMillis(10);
     private final double[] signalPoints = new double[30];
     private long lastSignalPointTimestamp;
     private long lastUpPeekTimestamp;
-    private final static double VARIATION_MIN_THRESHOLD = 0.8d;
-    private final static double VARIATION_MAX_THRESHOLD = 2.5d;
+    private final static double VARIATION_MIN_THRESHOLD = 2d;
+    private final static double VARIATION_MAX_THRESHOLD = 15d;
 
 
     public synchronized void reset() {

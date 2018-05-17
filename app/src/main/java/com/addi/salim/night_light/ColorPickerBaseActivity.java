@@ -3,6 +3,7 @@ package com.addi.salim.night_light;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.hardware.Camera;
@@ -87,6 +88,8 @@ public class ColorPickerBaseActivity extends AppCompatActivity
      */
     protected int mSelectedColor;
 
+    private float[] lastColorHSV = new float[3];
+
     /**
      * A simple {@link View} used for showing the picked color.
      */
@@ -151,7 +154,7 @@ public class ColorPickerBaseActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
         // Check if BLE is enabled on the device.
-        if (!arduinoManager.isBluetoothEnabled()) {
+        if (!arduinoManager.isBluetoothEnabled() || !arduinoManager.isConnected()) {
             finish();
         }
 
@@ -183,7 +186,7 @@ public class ColorPickerBaseActivity extends AppCompatActivity
 
     private void sendColor(byte red, byte green, byte blue) {
         final byte data[] = new byte[]{red, green, blue};
-        arduinoManager.sendData(data);
+        arduinoManager.sendColor(data);
     }
 
     @Override
@@ -225,10 +228,17 @@ public class ColorPickerBaseActivity extends AppCompatActivity
 
     @Override
     public void onColorSelected(int color) {
-        mSelectedColor = color;
-        mPointerRing.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-        if (!isManualColorPickMode) {
-            applyPreviewColor(color);
+        final float[] hsv = new float[3];
+        Color.colorToHSV(color, hsv);
+
+        // ignore brightness of color
+        if (lastColorHSV[0] != hsv[0] || lastColorHSV[1] != hsv[1]) {
+            lastColorHSV = hsv;
+            mSelectedColor = color;
+            mPointerRing.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+            if (!isManualColorPickMode) {
+                applyPreviewColor(color);
+            }
         }
     }
 
