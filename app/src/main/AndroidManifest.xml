@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.addi.salim.night_light">
+    package="com.addi.salim.robot_eyes">
 
 
     <uses-permission android:name="android.permission.CAMERA" />
@@ -14,10 +14,6 @@
 
     <uses-feature
         android:name="android.hardware.camera"
-        android:required="true" />
-
-    <uses-feature
-        android:name="android.hardware.sensor.gyroscope"
         android:required="true" />
 
     <application
@@ -35,10 +31,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".ColorPickerBaseActivity"
-            android:screenOrientation="fullSensor" />
 
         <!-- Declare the service that we want to use in our application in the manifest. Learn more
 about Service in Android development: https://developer.android.com/guide/components/services-->

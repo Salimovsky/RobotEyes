@@ -1,4 +1,4 @@
-package com.addi.salim.night_light;
+package com.addi.salim.robot_eyes;
 
 public interface ConnectionListener {
     void onConnected();
@@ -7,5 +7,7 @@ public interface ConnectionListener {
 
     void onConnectionError();
 
-    void onDataReceived(byte[] data);
+    void onDistanceReceived(int id, int distanceInCm);
+
+    void onAlarmReceived();
 }

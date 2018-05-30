@@ -1,4 +1,4 @@
-package com.addi.salim.night_light;
+package com.addi.salim.robot_eyes;
 
 import android.Manifest;
 import android.app.Activity;
@@ -30,6 +30,7 @@ public class PermissionUtil {
     public static final int LOCATION_PERMISSION_REQUEST_CODE = 2;
     public static final int LOCATION_SETTING_REQUEST_CODE = 3;
     public static final int BLUETOOTH_SETTING_REQUEST_CODE = 4;
+    public static final int RC_HANDLE_GMS = 5;
 
 
     public static boolean isLocationPermissionGranted(@NonNull Context context) {

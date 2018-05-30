@@ -1,4 +1,4 @@
-package com.addi.salim.night_light;
+package com.addi.salim.robot_eyes;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -15,8 +15,8 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.addi.salim.night_light.BLE.RBLGattAttributes;
-import com.addi.salim.night_light.BLE.RBLService;
+import com.addi.salim.robot_eyes.BLE.RBLGattAttributes;
+import com.addi.salim.robot_eyes.BLE.RBLService;
 
 import java.util.Locale;
 import java.util.Map;
@@ -26,6 +26,15 @@ import static android.content.Context.BIND_AUTO_CREATE;
 
 public class ArduinoManager {
     private final static String TAG = ArduinoManager.class.getSimpleName();
+
+
+    // defined commands
+    private final static byte CMD_SEND_NEW_FACE_ANGLE = 0x01;
+    private final static byte CMD_SEND_FACE_REMOVED = 0x02;
+    private final static byte CMD_SEND_ALARM = 0x03;
+    private final static byte CMD_SEND_DISMISS_ALARM = 0x04;
+    private final static byte CMD_RECEIVE_FACE_DISTANCE = 0x01;
+
     private static ArduinoManager singleton;
     // Define the device name and the length of the name
     // Note the device name and the length should be consistent with the ones defined in the Duo sketch
@@ -152,26 +161,25 @@ public class ArduinoManager {
         mBluetoothLeService.writeCharacteristic(mCharacteristicTx);
     }
 
-    public void sendColor(byte[] data) {
-        final byte[] command = {0x01};
-        final byte[] commandAndData = new byte[command.length + data.length];
-
-        // concatenate command and data arrays into a single commandAndData array:
-        System.arraycopy(command, 0, commandAndData, 0, command.length);
-        System.arraycopy(data, 0, commandAndData, command.length, data.length);
-
+    public void sendObjectAngle(int id, float radianAngle) {
+        final int roundedAngle = (int) (radianAngle * 0xFF);
+        final byte sign = (byte) ((radianAngle < 0) ? 0B10000000 : 0);
+        final byte[] commandAndData = {CMD_SEND_NEW_FACE_ANGLE, (byte) (id & 0xFF), (byte) (((byte) ((roundedAngle & 0xFF00) >> 8)) | sign), (byte) (roundedAngle & 0xFF)};
         sendData(commandAndData);
     }
 
-    public void switchColor() {
-        final byte[] data = new byte[3]; // dummy data to fill the required length for sent data
-        final byte[] command = {0x02};
-        final byte[] commandAndData = new byte[command.length + data.length];
+    public void sendObjectRemoved(int id) {
+        final byte[] commandAndData = {CMD_SEND_FACE_REMOVED, (byte) (id & 0xFF), 0x00, 0x00};
+        sendData(commandAndData);
+    }
 
-        // concatenate command and data arrays into a single commandAndData array:
-        System.arraycopy(command, 0, commandAndData, 0, command.length);
-        System.arraycopy(data, 0, commandAndData, command.length, data.length);
+    public void sendObjectDistanceAlarm(int id) {
+        final byte[] commandAndData = {CMD_SEND_ALARM, (byte) (id & 0xFF), 0x00, 0x00};
+        sendData(commandAndData);
+    }
 
+    public void sendDismissAlarm() {
+        final byte[] commandAndData = {CMD_SEND_DISMISS_ALARM, 0x00, 0x00, 0x00};
         sendData(commandAndData);
     }
 
@@ -198,8 +206,14 @@ public class ArduinoManager {
     }
 
     private void notifyOnDataReceived(byte[] data) {
-        for (ConnectionListener listener : listeners.keySet()) {
-            listener.onDataReceived(data);
+        final byte command = data[0];
+        final int id = (0x000000FF & data[1]);
+        final int distanceInCm = (0x000000FF & data[2]);
+
+        if (command == CMD_RECEIVE_FACE_DISTANCE) {
+            for (ConnectionListener listener : listeners.keySet()) {
+                listener.onDistanceReceived(id, distanceInCm);
+            }
         }
     }
 
