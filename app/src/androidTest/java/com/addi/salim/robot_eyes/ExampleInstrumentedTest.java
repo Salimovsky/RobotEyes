@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("com.addi.salim.night_light", appContext.getPackageName());
+        assertEquals("com.addi.salim.robot_eyes", appContext.getPackageName());
     }
 }

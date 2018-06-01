@@ -3,8 +3,9 @@ apply plugin: 'kotlin-android'
 
 android {
     compileSdkVersion 27
+    buildToolsVersion '27.0.3'
     defaultConfig {
-        applicationId "com.addi.salim.night_light"
+        applicationId "com.addi.salim.robot_eyes"
         minSdkVersion 21
         targetSdkVersion 27
         versionCode 1
@@ -27,9 +28,21 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
-    implementation 'com.google.android.gms:play-services-gcm:11.8.0'
-    implementation 'com.google.android.gms:play-services-location:11.8.0'
-    implementation 'com.google.android.gms:play-services-vision:11.8.0+'
+    implementation 'com.google.android.gms:play-services-gcm:15.0.1'
+    implementation 'com.google.android.gms:play-services-location:15.0.1'
+    implementation 'com.google.android.gms:play-services-vision:15.0.1'
+    implementation 'com.google.android.gms:play-services-auth:15.0.1'
+    implementation 'pub.devrel:easypermissions:0.3.0'
+    implementation('com.google.api-client:google-api-client-android:1.23.0') {
+        exclude group: 'org.apache.httpcomponents'
+    }
+    implementation('com.google.apis:google-api-services-gmail:v1-rev89-1.23.0') {
+        exclude group: 'org.apache.httpcomponents'
+    }
+
+    implementation 'com.sun.mail:android-mail:1.5.5'
+    implementation 'com.sun.mail:android-activation:1.5.5'
+
 }
 repositories {
     mavenCentral()

@@ -1,12 +1,14 @@
 package com.addi.salim.robot_eyes;
 
 import android.Manifest;
+import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.os.AsyncTask;
@@ -27,8 +29,18 @@ import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.MultiDetector;
 import com.google.android.gms.vision.MultiProcessor;
 import com.google.android.gms.vision.face.FaceDetector;
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
+import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.services.gmail.GmailScopes;
+import com.google.common.base.Strings;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+import pub.devrel.easypermissions.AfterPermissionGranted;
+import pub.devrel.easypermissions.EasyPermissions;
 
 import static com.addi.salim.robot_eyes.PermissionUtil.BLUETOOTH_SETTING_REQUEST_CODE;
 import static com.addi.salim.robot_eyes.PermissionUtil.CAMERA_PERMISSION_REQUEST_CODE;
@@ -37,25 +49,46 @@ import static com.addi.salim.robot_eyes.PermissionUtil.LOCATION_SETTING_REQUEST_
 import static com.addi.salim.robot_eyes.PermissionUtil.RC_HANDLE_GMS;
 
 public class MainActivity extends AppCompatActivity {
+    static final int REQUEST_ACCOUNT_PICKER = 1000;
+    static final int REQUEST_AUTHORIZATION = 1001;
+    static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
+    static final int REQUEST_PERMISSION_GET_ACCOUNTS = 1003;
     private static final String TAG = MainActivity.class.getSimpleName();
-
+    private static final String APP_TAG = "RobotEyes";
     private static final int CAMERA_PREVIEW_WIDTH = 640;
     private static final int CAMERA_PREVIEW_HEIGHT = 480;
     private static final double distanceToRangeFinder = 5.5d; //cm
     private static final int CAMERA_ID = CameraSource.CAMERA_FACING_BACK;
+    private boolean safeToTakePicture = false;
+    private static final String[] SCOPES = {GmailScopes.GMAIL_SEND};
+    private static final String PREF_ACCOUNT_NAME = "accountName";
     private double angleOfView;
-
-    private View rootView;
     private CameraSource mCameraSource = null;
     private CameraSourcePreview mPreview;
     private GraphicOverlay mGraphicOverlay;
-
     private ArduinoManager arduinoManager;
     private RangeFinderAgentFactory rangeFinderAgentFactory;
     private RangeFinderManager rangeFinderManager;
 
+    // Gmail API
+    private SendEmail sendEmail;
+    private GoogleAccountCredential mCredential;
     // Declare all variables associated with the UI components
     private Button connectToBluetoothButton;
+
+    private final CameraSource.PictureCallback pictureCallback = new CameraSource.PictureCallback() {
+
+        @Override
+        public void onPictureTaken(byte[] data) {
+            checkPreRequirements();
+            final Set<String> to = new HashSet<>();
+            to.add("salim.addi@gmail.com");
+            sendEmail.emailPictureAlarm(mCredential, to, data);
+
+            //finished saving picture
+            safeToTakePicture = true;
+        }
+    };
 
     private final ConnectionListener connectionListener = new ConnectionListener() {
 
@@ -81,10 +114,16 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onAlarmReceived() {
-            //TODO: take picture and email it!
+            if (mCameraSource == null) {
+                return;
+            }
+
+            if (safeToTakePicture) {
+                mCameraSource.takePicture(null, pictureCallback);
+                safeToTakePicture = false;
+            }
         }
     };
-
     private final View.OnClickListener connectToBLEClickListener = new View.OnClickListener() {
 
         @Override
@@ -98,14 +137,8 @@ public class MainActivity extends AppCompatActivity {
                 triggerAndUpdateConnection();
             }
 
-        }
-    };
-
-    private final View.OnClickListener clickListener = new View.OnClickListener() {
-
-        @Override
-        public void onClick(View v) {
-            updateUI(v);
+            // check all conditions to send email alarms are satisfied!
+            checkPreRequirements();
         }
     };
 
@@ -115,6 +148,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         initUI();
         arduinoManager = ArduinoManager.getInstance(getApplicationContext());
+        sendEmail = new SendEmail(APP_TAG, getCacheDir());
 
         // Connection button click event
         connectToBluetoothButton.setOnClickListener(connectToBLEClickListener);
@@ -134,10 +168,15 @@ public class MainActivity extends AppCompatActivity {
         } else {
             requestCameraPermission();
         }
+
+        // Initialize credentials and service object.
+        mCredential = GoogleAccountCredential.usingOAuth2(
+                getApplicationContext(), Arrays.asList(SCOPES))
+                .setBackOff(new ExponentialBackOff());
     }
 
     private void initUI() {
-        rootView = findViewById(R.id.root);
+        View rootView = findViewById(R.id.root);
         connectToBluetoothButton = findViewById(R.id.connectBtn);
         mPreview = (CameraSourcePreview) findViewById(R.id.preview);
         mGraphicOverlay = (GraphicOverlay) findViewById(R.id.faceOverlay);
@@ -153,12 +192,16 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (angleOfView == 0) {
-            // calculate the camera angle of view asynchronously.
-            VisualTrackerAsyncTask visualTrackerAsyncTask = new VisualTrackerAsyncTask();
-            visualTrackerAsyncTask.execute();
-        } else {
-            startCameraSource();
+
+        int rc = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
+        if (rc == PackageManager.PERMISSION_GRANTED) {
+            if (angleOfView == 0) {
+                // calculate the camera angle of view asynchronously.
+                VisualTrackerAsyncTask visualTrackerAsyncTask = new VisualTrackerAsyncTask();
+                visualTrackerAsyncTask.execute();
+            } else {
+                startCameraSource();
+            }
         }
 
         // Check if BLE is enabled on the device. Created by the RedBear team.
@@ -196,7 +239,6 @@ public class MainActivity extends AppCompatActivity {
             mCameraSource.release();
         }
     }
-
 
     private void updateUI(View selectedView) {
     }
@@ -278,6 +320,7 @@ public class MainActivity extends AppCompatActivity {
         if (mCameraSource != null) {
             try {
                 mPreview.start(mCameraSource, mGraphicOverlay);
+                safeToTakePicture = true;
             } catch (IOException e) {
                 Log.e(TAG, "Unable to start camera source.", e);
                 mCameraSource.release();
@@ -353,19 +396,144 @@ public class MainActivity extends AppCompatActivity {
         PermissionUtil.displayNetworkProvidedLocationSettingRequest(this, LOCATION_SETTING_REQUEST_CODE);
     }
 
+    /**
+     * verify that all the preconditions are satisfied. The preconditions are: Google Play Services installed, an
+     * account was selected. If any of the preconditions are not satisfied, the app will prompt the user as appropriate.
+     */
+    private void checkPreRequirements() {
+        if (!isGooglePlayServicesAvailable()) {
+            acquireGooglePlayServices();
+        } else if (Strings.isNullOrEmpty(mCredential.getSelectedAccountName())) {
+            chooseAccount();
+        }
+    }
+
+    /**
+     * Attempts to set the account used with the API credentials. If an account
+     * name was previously saved it will use that one; otherwise an account
+     * picker dialog will be shown to the user. Note that the setting the
+     * account to use with the credentials object requires the app to have the
+     * GET_ACCOUNTS permission, which is requested here if it is not already
+     * present. The AfterPermissionGranted annotation indicates that this
+     * function will be rerun automatically whenever the GET_ACCOUNTS permission
+     * is granted.
+     */
+    @AfterPermissionGranted(REQUEST_PERMISSION_GET_ACCOUNTS)
+    private void chooseAccount() {
+        if (EasyPermissions.hasPermissions(
+                this, Manifest.permission.GET_ACCOUNTS)) {
+            String accountName = getPreferences(Context.MODE_PRIVATE)
+                    .getString(PREF_ACCOUNT_NAME, null);
+            if (accountName != null) {
+                mCredential.setSelectedAccountName(accountName);
+                checkPreRequirements();
+            } else {
+                // Start a dialog from which the user can choose an account
+                startActivityForResult(
+                        mCredential.newChooseAccountIntent(),
+                        REQUEST_ACCOUNT_PICKER);
+            }
+        } else {
+            // Request the GET_ACCOUNTS permission via a user dialog
+            EasyPermissions.requestPermissions(
+                    this,
+                    "This app needs to access your Google account (via Contacts).",
+                    REQUEST_PERMISSION_GET_ACCOUNTS,
+                    Manifest.permission.GET_ACCOUNTS);
+        }
+    }
+
+    /**
+     * Check that Google Play services APK is installed and up to date.
+     *
+     * @return true if Google Play Services is available and up to
+     * date on this device; false otherwise.
+     */
+    private boolean isGooglePlayServicesAvailable() {
+        GoogleApiAvailability apiAvailability =
+                GoogleApiAvailability.getInstance();
+        final int connectionStatusCode =
+                apiAvailability.isGooglePlayServicesAvailable(this);
+        return connectionStatusCode == ConnectionResult.SUCCESS;
+    }
+
+    /**
+     * Attempt to resolve a missing, out-of-date, invalid or disabled Google
+     * Play Services installation via a user dialog, if possible.
+     */
+    private void acquireGooglePlayServices() {
+        GoogleApiAvailability apiAvailability =
+                GoogleApiAvailability.getInstance();
+        final int connectionStatusCode =
+                apiAvailability.isGooglePlayServicesAvailable(this);
+        if (apiAvailability.isUserResolvableError(connectionStatusCode)) {
+            showGooglePlayServicesAvailabilityErrorDialog(connectionStatusCode);
+        }
+    }
+
+    /**
+     * Display an error dialog showing that Google Play Services is missing
+     * or out of date.
+     *
+     * @param connectionStatusCode code describing the presence (or lack of)
+     *                             Google Play Services on this device.
+     */
+    void showGooglePlayServicesAvailabilityErrorDialog(
+            final int connectionStatusCode) {
+        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+        Dialog dialog = apiAvailability.getErrorDialog(
+                MainActivity.this,
+                connectionStatusCode,
+                REQUEST_GOOGLE_PLAY_SERVICES);
+        dialog.show();
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // User chose not to enable Bluetooth.
-        if (requestCode == BLUETOOTH_SETTING_REQUEST_CODE
-                && resultCode == Activity.RESULT_CANCELED) {
-            finish();
-            return;
-        } else if (requestCode == LOCATION_SETTING_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            triggerAndUpdateConnection();
-        }
-
         super.onActivityResult(requestCode, resultCode, data);
+
+
+        switch (requestCode) {
+            case BLUETOOTH_SETTING_REQUEST_CODE:
+                // User chose not to enable Bluetooth.
+                if (resultCode == Activity.RESULT_CANCELED) {
+                    finish();
+                    return;
+                } else if (resultCode == Activity.RESULT_OK) {
+                    triggerAndUpdateConnection();
+                }
+                break;
+            case REQUEST_GOOGLE_PLAY_SERVICES:
+                if (resultCode != RESULT_OK) {
+                    Toast.makeText(this,
+                            "This app requires Google Play Services. Please install " +
+                                    "Google Play Services on your device and relaunch this app.", Toast.LENGTH_LONG).show();
+                } else {
+                    checkPreRequirements();
+                }
+                break;
+            case REQUEST_ACCOUNT_PICKER:
+                if (resultCode == RESULT_OK && data != null &&
+                        data.getExtras() != null) {
+                    String accountName =
+                            data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+                    if (accountName != null) {
+                        SharedPreferences settings =
+                                getPreferences(Context.MODE_PRIVATE);
+                        SharedPreferences.Editor editor = settings.edit();
+                        editor.putString(PREF_ACCOUNT_NAME, accountName);
+                        editor.apply();
+                        mCredential.setSelectedAccountName(accountName);
+                        checkPreRequirements();
+                    }
+                }
+                break;
+            case REQUEST_AUTHORIZATION:
+                if (resultCode == RESULT_OK) {
+                    checkPreRequirements();
+                }
+                break;
+        }
     }
 
     /**
@@ -375,7 +543,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected Double doInBackground(Void... params) {
-            Camera camera;
+            Camera camera = null;
             double angleOfView = 60d;
             double horizontalAngleOfView = 60d;
 
@@ -385,9 +553,12 @@ public class MainActivity extends AppCompatActivity {
                 Camera.Parameters cameraParameters = camera.getParameters();
                 angleOfView = cameraParameters.getVerticalViewAngle();
                 horizontalAngleOfView = cameraParameters.getHorizontalViewAngle();
-                camera.release();
             } catch (Exception e) {
                 Log.e(TAG, e.getMessage());
+            } finally {
+                if (camera != null) {
+                    camera.release();
+                }
             }
 
             Log.e("****", "Vertical Angle of View = " + angleOfView);
