@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
         public void onPictureTaken(byte[] data) {
             checkPreRequirements();
             final Set<String> to = new HashSet<>();
-            to.add("salim.addi@gmail.com");
+            to.add("alarm.recipient@gmail.com");
             sendEmail.emailPictureAlarm(mCredential, to, data);
 
             //finished saving picture

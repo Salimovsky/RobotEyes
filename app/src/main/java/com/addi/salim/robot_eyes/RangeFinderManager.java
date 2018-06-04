@@ -81,7 +81,7 @@ public class RangeFinderManager {
     }
 
     private static class SignalFilter {
-        private static final int WINDOW_SIZE = 5;
+        private static final int WINDOW_SIZE = 7;
         private final float[] filterWindow = new float[WINDOW_SIZE];
         private int windowIndex = 0;
         private boolean initialized;

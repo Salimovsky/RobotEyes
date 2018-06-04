@@ -176,6 +176,7 @@ public class ArduinoManager {
     public void sendObjectDistanceAlarm(int id) {
         final byte[] commandAndData = {CMD_SEND_ALARM, (byte) (id & 0xFF), 0x00, 0x00};
         sendData(commandAndData);
+        notifyOnAlarm();
     }
 
     public void sendDismissAlarm() {
@@ -203,6 +204,12 @@ public class ArduinoManager {
         for (ConnectionListener listener : listeners.keySet()) {
             listener.onConnectionError();
         }
+    }
+
+    private void notifyOnAlarm() {
+            for (ConnectionListener listener : listeners.keySet()) {
+                listener.onAlarmReceived();
+            }
     }
 
     private void notifyOnDataReceived(byte[] data) {
