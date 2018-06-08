@@ -68,7 +68,7 @@ public class RangeFinderManager {
                 objectsWithinAlarmDistance.add(id);
                 if (!isAlarmOn) {
                     isAlarmOn = true;
-                    arduinoManager.sendObjectDistanceAlarm(id);
+                    arduinoManager.sendObjectDistanceAlarm(id, (int) smoothedDistance);
                 }
             } else {
                 objectsWithinAlarmDistance.remove(id);

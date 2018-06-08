@@ -14,6 +14,8 @@ import android.hardware.Camera;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -35,13 +37,19 @@ import com.google.api.services.gmail.GmailScopes;
 import com.google.common.base.Strings;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
 
+import static android.speech.tts.TextToSpeech.QUEUE_ADD;
+import static android.speech.tts.TextToSpeech.QUEUE_FLUSH;
 import static com.addi.salim.robot_eyes.PermissionUtil.BLUETOOTH_SETTING_REQUEST_CODE;
 import static com.addi.salim.robot_eyes.PermissionUtil.CAMERA_PERMISSION_REQUEST_CODE;
 import static com.addi.salim.robot_eyes.PermissionUtil.LOCATION_PERMISSION_REQUEST_CODE;
@@ -53,14 +61,20 @@ public class MainActivity extends AppCompatActivity {
     static final int REQUEST_AUTHORIZATION = 1001;
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
     static final int REQUEST_PERMISSION_GET_ACCOUNTS = 1003;
+
+    private static final String ALARM_TEXT1 = "Please step back! Alarm will start in 3";
+    private static final String ALARM_TEXT2 = "2";
+    private static final String ALARM_TEXT3 = "1";
+    private static final String START_ALARM_UTTERANCE_ID = "AlarmStart";
+
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final String APP_TAG = "RobotEyes";
     private static final int CAMERA_PREVIEW_WIDTH = 640;
     private static final int CAMERA_PREVIEW_HEIGHT = 480;
-    private static final double distanceToRangeFinder = 5.5d; //cm
+    private static final double distanceToRangeFinder = 6d; //cm
     private static final int CAMERA_ID = CameraSource.CAMERA_FACING_BACK;
     private boolean safeToTakePicture = false;
-    private static final String[] SCOPES = {GmailScopes.GMAIL_SEND};
+    private static final String[] SCOPES = {GmailScopes.GMAIL_SEND, GmailScopes.GMAIL_READONLY, GmailScopes.MAIL_GOOGLE_COM};
     private static final String PREF_ACCOUNT_NAME = "accountName";
     private double angleOfView;
     private CameraSource mCameraSource = null;
@@ -69,10 +83,18 @@ public class MainActivity extends AppCompatActivity {
     private ArduinoManager arduinoManager;
     private RangeFinderAgentFactory rangeFinderAgentFactory;
     private RangeFinderManager rangeFinderManager;
+    private int lastDetectedDistance = 0;
+    private TextToSpeech textToSpeech;
 
     // Gmail API
-    private SendEmail sendEmail;
+    private EmailAgent emailAgent;
     private GoogleAccountCredential mCredential;
+    private final Set<String> ALARM_RECIPIENTS = new HashSet() {{
+        add("alarm.recipient1@gmail.com");
+        add("alarm.recipient2@gmail.com");
+        add("alarm.recipient3@gmail.com");
+    }};
+
     // Declare all variables associated with the UI components
     private Button connectToBluetoothButton;
 
@@ -81,9 +103,9 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onPictureTaken(byte[] data) {
             checkPreRequirements();
-            final Set<String> to = new HashSet<>();
-            to.add("alarm.recipient@gmail.com");
-            sendEmail.emailPictureAlarm(mCredential, to, data);
+            alarmEmailThreadReader = new AlarmEmailThreadReader(emailAgent, textToSpeech);
+            final String alarmTime = getCurrentTime();
+            emailAgent.emailPictureAlarm(ALARM_RECIPIENTS, alarmTime, lastDetectedDistance, data, alarmEmailThreadReader);
 
             //finished saving picture
             safeToTakePicture = true;
@@ -113,15 +135,52 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onAlarmReceived() {
+        public void onAlarmTriggered(int distanceInCm) {
             if (mCameraSource == null) {
                 return;
             }
 
-            if (safeToTakePicture) {
-                mCameraSource.takePicture(null, pictureCallback);
-                safeToTakePicture = false;
+            final HashMap<String, String> params = new HashMap<>();
+            params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, START_ALARM_UTTERANCE_ID);
+            lastDetectedDistance = distanceInCm;
+            textToSpeech.speak(ALARM_TEXT1, QUEUE_FLUSH, null);
+            textToSpeech.playSilentUtterance(400, QUEUE_ADD, null);
+            textToSpeech.speak(ALARM_TEXT2, QUEUE_ADD, null);
+            textToSpeech.playSilentUtterance(400, QUEUE_ADD, null);
+            textToSpeech.speak(ALARM_TEXT3, QUEUE_ADD, params);
+        }
+
+        @Override
+        public void onAlarmDismissed() {
+            if (alarmEmailThreadReader != null) {
+                alarmEmailThreadReader.stop();
+                alarmEmailThreadReader = null;
             }
+
+            final String currentTime = getCurrentTime();
+            emailAgent.emailAlarmDismissed(ALARM_RECIPIENTS, currentTime);
+            textToSpeech.stop();
+        }
+    };
+
+    private final UtteranceProgressListener utteranceProgressListener = new UtteranceProgressListener() {
+
+        @Override
+        public void onStart(String utteranceId) {
+        }
+
+        @Override
+        public void onDone(String utteranceId) {
+            if (START_ALARM_UTTERANCE_ID.equals(utteranceId)) {
+                if (safeToTakePicture) {
+                    mCameraSource.takePicture(null, pictureCallback);
+                    safeToTakePicture = false;
+                }
+            }
+        }
+
+        @Override
+        public void onError(String utteranceId) {
         }
     };
     private final View.OnClickListener connectToBLEClickListener = new View.OnClickListener() {
@@ -142,13 +201,22 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    private AlarmEmailThreadReader alarmEmailThreadReader;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initUI();
         arduinoManager = ArduinoManager.getInstance(getApplicationContext());
-        sendEmail = new SendEmail(APP_TAG, getCacheDir());
+
+        textToSpeech = new TextToSpeech(MainActivity.this, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                textToSpeech.setLanguage(Locale.US);
+            }
+        });
+        textToSpeech.setOnUtteranceProgressListener(utteranceProgressListener);
 
         // Connection button click event
         connectToBluetoothButton.setOnClickListener(connectToBLEClickListener);
@@ -175,12 +243,12 @@ public class MainActivity extends AppCompatActivity {
                 .setBackOff(new ExponentialBackOff());
     }
 
+
     private void initUI() {
         View rootView = findViewById(R.id.root);
         connectToBluetoothButton = findViewById(R.id.connectBtn);
         mPreview = (CameraSourcePreview) findViewById(R.id.preview);
         mGraphicOverlay = (GraphicOverlay) findViewById(R.id.faceOverlay);
-
         disableBluetoothUI();
     }
 
@@ -238,9 +306,17 @@ public class MainActivity extends AppCompatActivity {
         if (mCameraSource != null) {
             mCameraSource.release();
         }
+
+        if (textToSpeech != null) {
+            textToSpeech.shutdown();
+            textToSpeech = null;
+        }
     }
 
-    private void updateUI(View selectedView) {
+    private String getCurrentTime() {
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat timeFormat = new SimpleDateFormat(" yyyy-MM-dd HH:mm:ss");
+        return timeFormat.format(calendar.getTime());
     }
 
     /**
@@ -405,6 +481,13 @@ public class MainActivity extends AppCompatActivity {
             acquireGooglePlayServices();
         } else if (Strings.isNullOrEmpty(mCredential.getSelectedAccountName())) {
             chooseAccount();
+        } else if (emailAgent == null) {
+            emailAgent = new EmailAgent(APP_TAG, mCredential, getCacheDir(), getApplicationContext());
+
+            final Set<String> to = new HashSet<>();
+            to.add("me");
+            // dummy email to try to trigger gmail access authorization
+            emailAgent.emailAlarmDismissed(to, "");
         }
     }
 
@@ -492,7 +575,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-
         switch (requestCode) {
             case BLUETOOTH_SETTING_REQUEST_CODE:
                 // User chose not to enable Bluetooth.
@@ -529,9 +611,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 break;
             case REQUEST_AUTHORIZATION:
-                if (resultCode == RESULT_OK) {
                     checkPreRequirements();
-                }
                 break;
         }
     }
