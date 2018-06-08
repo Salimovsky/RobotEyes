@@ -9,5 +9,7 @@ public interface ConnectionListener {
 
     void onDistanceReceived(int id, int distanceInCm);
 
-    void onAlarmReceived();
+    void onAlarmTriggered(int distanceCm);
+
+    void onAlarmDismissed();
 }

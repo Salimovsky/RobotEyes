@@ -173,15 +173,16 @@ public class ArduinoManager {
         sendData(commandAndData);
     }
 
-    public void sendObjectDistanceAlarm(int id) {
+    public void sendObjectDistanceAlarm(int id, int distanceCm) {
         final byte[] commandAndData = {CMD_SEND_ALARM, (byte) (id & 0xFF), 0x00, 0x00};
         sendData(commandAndData);
-        notifyOnAlarm();
+        notifyOnAlarm(distanceCm);
     }
 
     public void sendDismissAlarm() {
         final byte[] commandAndData = {CMD_SEND_DISMISS_ALARM, 0x00, 0x00, 0x00};
         sendData(commandAndData);
+        notifyDismissAlarm();
     }
 
     public boolean isBluetoothEnabled() {
@@ -206,11 +207,18 @@ public class ArduinoManager {
         }
     }
 
-    private void notifyOnAlarm() {
+    private void notifyOnAlarm(int distanceCm) {
             for (ConnectionListener listener : listeners.keySet()) {
-                listener.onAlarmReceived();
+                listener.onAlarmTriggered(distanceCm);
             }
     }
+
+    private void notifyDismissAlarm() {
+        for (ConnectionListener listener : listeners.keySet()) {
+            listener.onAlarmDismissed();
+        }
+    }
+
 
     private void notifyOnDataReceived(byte[] data) {
         final byte command = data[0];
